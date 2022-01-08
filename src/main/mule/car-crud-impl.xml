@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<flow name="car-get-implFlow" doc:id="21be7e76-2e5a-4c10-a64e-fbfce2ada7be" >
+		<ee:transform doc:name="Transform Message" doc:id="07a75e6f-4927-45be-b433-ef28fcaa7a11" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="sourceVar" ><![CDATA[%dw 2.0
+output application/json
+---
+attributes.queryParams.source]]></ee:set-variable>
+				<ee:set-variable variableName="destinationVar" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.queryParams.destination]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="b5a6b368-223a-4513-83cd-c45620a411a1" >
+			<when expression='#[vars.sourceVar != null and vars.sourceVar != null]'>
+				<salesforce:query doc:name="Query" doc:id="c04821c8-387c-48a5-a8c8-04e574755006" config-ref="Salesforce_Config" >
+					<salesforce:salesforce-query ><![CDATA[select Name,carName__c,carPartner__c,source__c,destination__c,departureDate__c,seater__c,price__c from CAR_INFO__c where source__c= ':source' and destination__c= ':destination']]></salesforce:salesforce-query>
+					<salesforce:parameters ><![CDATA[#[{
+	"source":vars.sourceVar,
+	"destination":vars.destinationVar
+}]]]></salesforce:parameters>
+				</salesforce:query>
+				<ee:transform doc:name="Transform Message" doc:id="086969b6-9b02-4cf0-b040-09736200532f" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map((pay,index)->{
+        "price": pay.price__c,
+        "destination": pay.destination__c,
+        "departureDate": pay.departureDate__c as DateTime,
+        "source": pay.source__c,
+        "carPartner": pay.carPartner__c,
+        "seater": pay.seater__c,
+        "name":pay.carName__c,
+        "carNumber": pay.Name
+    })]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="ec77da72-cd1c-4f82-a669-18b60f5fc8aa" message='"car " ++ " from Source: " ++ #[payload.source] ++ " to destination " ++ #[payload.destination]'/>
+			</when>
+			<otherwise >
+				<salesforce:query doc:name="Query" doc:id="6cd7597e-9750-4241-a4e7-456916d975f9" config-ref="Salesforce_Config" >
+					<salesforce:salesforce-query ><![CDATA[select Name,carName__c,carPartner__c,source__c,destination__c,departureDate__c,seater__c,price__c from CAR_INFO__c]]></salesforce:salesforce-query>
+				</salesforce:query>
+				<ee:transform doc:name="Transform Message" doc:id="de94fbf9-2120-4b85-b3b2-dc40b938e9f9">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map((pay,index)->{
+        "price": pay.price__c,
+        "destination": pay.destination__c,
+        "departureDate": pay.departureDate__c as DateTime,
+        "source": pay.source__c,
+        "carPartner": pay.carPartner__c,
+        "seater": pay.seater__c,
+        "name":pay.carName__c,
+        "carNumber": pay.Name
+    })]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="07e98e13-63f5-4ba1-b2a0-06743758faa4" message='"get all car details "'/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="car-post-implFlow" doc:id="0bf4ee54-6dce-4f0b-8de0-77ec12ef183f" >
+		<ee:transform doc:name="Transform Message" doc:id="6d8f6ba2-e8c6-45d8-a813-1cc02ce6a1c1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	Name: payload.carNumber,
+	carName__c: payload.name,
+	carPartner__c: payload.carPartner,
+	source__c: payload.source,
+	destination__c: payload.destination,
+	departureDate__c: payload.departureDate as DateTime,
+	price__c: payload.price,
+	seater__c: payload.seater,
+	createdDate__c:now(),
+	updatedDate__c:now()
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create type="CAR_INFO__c" doc:name="Create" doc:id="7b5942c0-3c8a-43b6-bec2-6abd58eae5af" config-ref="Salesforce_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="d0c2683e-2008-4360-9fd7-db7bbb84d6de" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"Flight added successfully"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="car-delete-implFlow" doc:id="19abe162-e5db-49af-aff2-a6939a5443b5" >
+		<salesforce:query doc:name="Query" doc:id="830e9b34-dfa4-43b5-97d7-24363383b5dc" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[select Id from CAR_INFO__c where Name=':carNumber']]></salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[{
+	"carNumber":attributes.uriParams.carNumber
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="993f2c7a-70bf-4558-9977-d8b3701753dc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map {
+	id:$.Id
+}
+ ]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:delete doc:name="Delete" doc:id="76a293b6-a9d8-4725-b0b7-2febfb58b2cf" config-ref="Salesforce_Config">
+			<salesforce:ids ><![CDATA[#[payload.id]]]></salesforce:ids>
+		</salesforce:delete>
+		<logger level="INFO" doc:name="Logger" doc:id="0772ebee-0a5c-4f54-9c6b-c6b662248246" message='"car deleted"'/>
+		<ee:transform doc:name="Transform Message" doc:id="70dc3f23-47f4-4ef3-95de-c3f4406f675a" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Car deleted successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="car-getByCarNumber-implFlow" doc:id="ec4a4419-51e4-435c-8be4-04a1f7356ff8" >
+		<salesforce:query doc:name="Query" doc:id="46b8fc27-d28b-4287-8aeb-b67f34378a69" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[select Name,carName__c,carPartner__c,source__c,destination__c,departureDate__c,seater__c,price__c from CAR_INFO__c where Name=':carNumber']]></salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[{
+	"carNumber":attributes.uriParams.carNumber
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="8e49c232-a54e-40b6-9f3c-c466dca9912a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map((pay,index)->{
+        "price": pay.price__c,
+        "destination": pay.destination__c,
+        "departureDate": pay.departureDate__c as DateTime,
+        "source": pay.source__c,
+        "carPartner": pay.carPartner__c,
+        "seater": pay.seater__c,
+        "name":pay.carName__c,
+        "carNumber": pay.Name
+    })]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="ea269308-35e8-4ed9-99fa-07f2bf40e640" message='"fetching filtered records"' />
+	</flow>
+	<flow name="car-upsert-implFlow" doc:id="94505d08-97ed-4eb7-94bd-201cb7f4e40e" >
+		<ee:transform doc:name="Transform Message" doc:id="0996e1cc-bd97-452f-af45-2743152949ea" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	Name: attributes.uriParams.carNumber,
+	departureDate__c: payload.departureDate as DateTime,
+	price__c: payload.price,
+	updatedDate__c:now()
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:upsert objectType="CAR_INFO__c" doc:name="Upsert" doc:id="624246ff-c68d-419a-ad78-66fafe2fe66b" config-ref="Salesforce_Config" externalIdFieldName="Name"/>
+		<ee:transform doc:name="Transform Message" doc:id="35ccce15-2f40-4f27-b99f-f6d2fd3c0497" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Car updated successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="car-update-implFlow" doc:id="fbc3f45f-3eef-42ac-8905-ce027b2ab4d8" >
+		<ee:transform doc:name="Transform Message" doc:id="c720e58b-5ea1-4a20-afc9-013f8c46609b" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="dateVar" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.departureDate]]></ee:set-variable>
+				<ee:set-variable variableName="priceVar" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.price]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<salesforce:query doc:name="Query" doc:id="b91a749d-e378-4132-bf72-fe4225f8d436" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[select Id,Name,price__c,departureDate__c from CAR_INFO__c where Name=':carNumber']]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[{
+	carNumber:attributes.uriParams.carNumber
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="137deb98-329d-494d-82f7-099aef1c2e52" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	
+	Id:payload[0].Id,
+	Name:payload.Name,
+	price__c:vars.priceVar,
+	departureDate__c:vars.dateVar as DateTime,
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="7a919a46-53a4-4633-bef2-cbbffbc9332f" message='#["car fare updated to: " ++ vars.priceVar ++ " and date updated to: " ++ vars.dateVar]'/>
+		<salesforce:update type="CAR_INFO__c" doc:name="Update" doc:id="ed62b493-eedb-4f53-b177-0590362744e9" config-ref="Salesforce_Config"/>
+	</flow>
+	<flow name="car-getByCarPartner" doc:id="8c05462c-0501-4f48-925b-ef1ff35121e5" >
+		<ee:transform doc:name="Transform Message" doc:id="3643dc3d-88ba-4ebd-9867-bdf796449ac8" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="sourceVar" ><![CDATA[%dw 2.0
+output application/json
+---
+attributes.queryParams.source]]></ee:set-variable>
+				<ee:set-variable variableName="destinationVar" ><![CDATA[%dw 2.0
+output application/json
+---
+attributes.queryParams.destination]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="e276a92b-00ae-4da5-a112-26df7ddc94f9" >
+			<when expression="#[vars.sourceVar != null and vars.sourceVar != null]" >
+				<salesforce:query doc:name="Query" doc:id="c05c6390-04c9-414f-9c3c-6f0338b414ab" config-ref="Salesforce_Config" >
+					<salesforce:salesforce-query ><![CDATA[select Name,carName__c,carPartner__c,source__c,destination__c,departureDate__c,seater__c,price__c from CAR_INFO__c where carPartner__c=':carPartner' and source__c= ':source' and destination__c= ':destination']]></salesforce:salesforce-query>
+					<salesforce:parameters ><![CDATA[#[{
+	"source":vars.sourceVar,
+	"destination":vars.destinationVar,
+	"carPartner":attributes.uriParams.carPartner
+}]]]></salesforce:parameters>
+				</salesforce:query>
+				<ee:transform doc:name="Transform Message" doc:id="e8d6f4ad-c9ea-4015-8bd1-4904b5d28107" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map((pay,index)->{
+        "price": pay.price__c,
+        "destination": pay.destination__c,
+        "departureDate": pay.departureDate__c as DateTime,
+        "source": pay.source__c,
+        "carPartner": pay.carPartner__c,
+        "seater": pay.seater__c,
+        "name":pay.carName__c,
+        "carNumber": pay.Name
+    })]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="811d04f4-c29c-42e9-8b6b-aff2dac8e738" message='"car partner " ++ #[payload.carPartner] ++ " from Source: " ++ #[payload.source] ++ " to destination " ++ #[payload.destination]' />
+			</when>
+			<otherwise >
+				<salesforce:query doc:name="Query" doc:id="7c05d8a6-ee6b-436d-9752-3a585c139e58" config-ref="Salesforce_Config" >
+					<salesforce:salesforce-query ><![CDATA[select Name,carName__c,carPartner__c,source__c,destination__c,departureDate__c,seater__c,price__c from CAR_INFO__c where carPartner__c=':carPartner']]></salesforce:salesforce-query>
+					<salesforce:parameters ><![CDATA[#[{
+	"carPartner":attributes.uriParams.carPartner
+}]]]></salesforce:parameters>
+				</salesforce:query>
+				<ee:transform doc:name="Transform Message" doc:id="2ceb5d51-6e9e-4217-a8bb-949606388eaf" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map((pay,index)->{
+        "price": pay.price__c,
+        "destination": pay.destination__c,
+        "departureDate": pay.departureDate__c as DateTime,
+        "source": pay.source__c,
+        "carPartner": pay.carPartner__c,
+        "seater": pay.seater__c,
+        "name":pay.carName__c,
+        "carNumber": pay.Name
+    })]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="5f6bdb95-5cc0-4e85-a660-aa754762ae4e" message='"Car partner " ++ #[payload.carPartner] ' />
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

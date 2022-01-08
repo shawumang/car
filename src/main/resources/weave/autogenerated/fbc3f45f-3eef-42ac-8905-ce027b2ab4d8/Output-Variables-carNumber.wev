@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_fbc3f45f_3eef_42ac_8905_ce027b2ab4d8_Output_Variables_carNumber = Any
+
