@@ -11,7 +11,6 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 		<http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS">
 			<tls:context >
 				<tls:trust-store path="certificates/server-truststore.jks" password="mulesoft" type="jks" insecure="true" />
-				<tls:key-store type="jks" path="certificates/client-keystore.jks" keyPassword="mulesoft" password="mulesoft" />
 			</tls:context>
 		</http:listener-connection>
 	</http:listener-config>
