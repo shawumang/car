@@ -43,7 +43,7 @@
 						<workerType>MICRO</workerType>
 						<objectStoreV2>true</objectStoreV2>
 						<properties>
-							<http.port>8081</http.port>
+							<https.port>8082</https.port>
 						</properties>
 					</cloudHubDeployment>
 					<sharedLibraries>
