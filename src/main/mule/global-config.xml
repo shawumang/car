@@ -10,8 +10,8 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="d61da1dd-31e3-43aa-8590-ad87136e267c" >
 		<http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS">
 			<tls:context >
-				<tls:trust-store path="certificates/client-truststore.jks" password="mulesoft" type="jks" insecure="true" />
-				<tls:key-store type="jks" path="certificates/server-keystore.jks" keyPassword="mulesoft" password="mulesoft" />
+				<tls:trust-store path="certificates/server-truststore.jks" password="mulesoft" type="jks" insecure="true" />
+				<tls:key-store type="jks" path="certificates/client-keystore.jks" keyPassword="mulesoft" password="mulesoft" />
 			</tls:context>
 		</http:listener-connection>
 	</http:listener-config>
