@@ -39,7 +39,7 @@ output application/json
 payload map((pay,index)->{
         "price": pay.price__c,
         "destination": pay.destination__c,
-        "departureDate": pay.departureDate__c as DateTime,
+        "departureDate": pay.departureDate__c as DateTime default '',
         "source": pay.source__c,
         "carPartner": pay.carPartner__c,
         "seater": pay.seater__c,
@@ -48,7 +48,7 @@ payload map((pay,index)->{
     })]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
-				<logger level="INFO" doc:name="Logger" doc:id="ec77da72-cd1c-4f82-a669-18b60f5fc8aa" message='"car " ++ " from Source: " ++ #[payload.source] ++ " to destination " ++ #[payload.destination]'/>
+				<logger level="INFO" doc:name="Logger" doc:id="ec77da72-cd1c-4f82-a669-18b60f5fc8aa" message='car  from Source:  #[payload.source]  to destination  [payload.destination]'/>
 			</when>
 			<otherwise >
 				<salesforce:query doc:name="Query" doc:id="6cd7597e-9750-4241-a4e7-456916d975f9" config-ref="Salesforce_Config" >
@@ -62,7 +62,7 @@ output application/json
 payload map((pay,index)->{
         "price": pay.price__c,
         "destination": pay.destination__c,
-        "departureDate": pay.departureDate__c as DateTime,
+        "departureDate": pay.departureDate__c as DateTime default '',
         "source": pay.source__c,
         "carPartner": pay.carPartner__c,
         "seater": pay.seater__c,
@@ -156,7 +156,7 @@ output application/json
 payload map((pay,index)->{
         "price": pay.price__c,
         "destination": pay.destination__c,
-        "departureDate": pay.departureDate__c as DateTime,
+        "departureDate": pay.departureDate__c as DateTime default '',
         "source": pay.source__c,
         "carPartner": pay.carPartner__c,
         "seater": pay.seater__c,
@@ -166,33 +166,6 @@ payload map((pay,index)->{
 			</ee:message>
 		</ee:transform>
 		<logger level="INFO" doc:name="Logger" doc:id="ea269308-35e8-4ed9-99fa-07f2bf40e640" message='"fetching filtered records"' />
-		<error-handler ref="global-exception-handlerError_Handler" />
-	</flow>
-	<flow name="car-upsert-implFlow" doc:id="94505d08-97ed-4eb7-94bd-201cb7f4e40e" >
-		<ee:transform doc:name="Transform Message" doc:id="0996e1cc-bd97-452f-af45-2743152949ea" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/java
----
-[{
-	Name: attributes.uriParams.carNumber,
-	departureDate__c: payload.departureDate as DateTime,
-	price__c: payload.price,
-	updatedDate__c:now()
-}]]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<salesforce:upsert objectType="CAR_INFO__c" doc:name="Upsert" doc:id="624246ff-c68d-419a-ad78-66fafe2fe66b" config-ref="Salesforce_Config" externalIdFieldName="Name"/>
-		<ee:transform doc:name="Transform Message" doc:id="35ccce15-2f40-4f27-b99f-f6d2fd3c0497" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-  message: "Car updated successfully"
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
 		<error-handler ref="global-exception-handlerError_Handler" />
 	</flow>
 	<flow name="car-update-implFlow" doc:id="fbc3f45f-3eef-42ac-8905-ce027b2ab4d8" >
@@ -230,7 +203,7 @@ output application/java
 }]]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="Logger" doc:id="7a919a46-53a4-4633-bef2-cbbffbc9332f" message='#["car fare updated to: " ++ vars.priceVar ++ " and date updated to: " ++ vars.dateVar]'/>
+		<logger level="INFO" doc:name="Logger" doc:id="7a919a46-53a4-4633-bef2-cbbffbc9332f" message='car fare updated to:  #[vars.priceVar]  and date updated to: #[vars.dateVar]'/>
 		<salesforce:update type="CAR_INFO__c" doc:name="Update" doc:id="ed62b493-eedb-4f53-b177-0590362744e9" config-ref="Salesforce_Config"/>
 		<error-handler ref="global-exception-handlerError_Handler" />
 	</flow>
@@ -275,7 +248,7 @@ payload map((pay,index)->{
     })]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
-				<logger level="INFO" doc:name="Logger" doc:id="811d04f4-c29c-42e9-8b6b-aff2dac8e738" message='"car partner " ++ #[payload.carPartner] ++ " from Source: " ++ #[payload.source] ++ " to destination " ++ #[payload.destination]' />
+				<logger level="INFO" doc:name="Logger" doc:id="811d04f4-c29c-42e9-8b6b-aff2dac8e738" message='"car partner  #[payload.carPartner]   from Source: " #[payload.source]  to destination :  #[payload.destination]' />
 			</when>
 			<otherwise >
 				<salesforce:query doc:name="Query" doc:id="7c05d8a6-ee6b-436d-9752-3a585c139e58" config-ref="Salesforce_Config" >
@@ -301,7 +274,7 @@ payload map((pay,index)->{
     })]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
-				<logger level="INFO" doc:name="Logger" doc:id="5f6bdb95-5cc0-4e85-a660-aa754762ae4e" message='"Car partner " ++ #[payload.carPartner] ' />
+				<logger level="INFO" doc:name="Logger" doc:id="5f6bdb95-5cc0-4e85-a660-aa754762ae4e" message='Car partner  #[payload.carPartner] ' />
 			</otherwise>
 		</choice>
 		<error-handler ref="global-exception-handlerError_Handler" />

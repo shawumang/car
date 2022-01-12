@@ -1,0 +1,23 @@
+[
+
+  {
+        "price": 4500,
+        "destination": "Kolkata",
+        "departureDate": "2021-12-30T17:00:00",
+        "source": "Mumbai",
+        "carPartner": "ZOOM",
+        "seater": 7,
+        "name": "Innova",
+        "carNumber": "WB082456"
+    },
+    {
+        "price": 4500,
+        "destination": "Delhi",
+        "departureDate": "2021-12-30T17:40:00",
+        "source": "Mumbai",
+        "carPartner": "REV",
+        "seater": 5,
+        "name": "Baleno",
+        "carNumber": "MH032456"
+    }
+]
